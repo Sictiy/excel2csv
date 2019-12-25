@@ -1,59 +1,40 @@
 package main
 
 import (
+	"excel2csv/config"
+	"excel2csv/excel"
+	"excel2csv/general"
+	"excel2csv/gui"
+	"excel2csv/log"
 	"fmt"
-	"github.com/xuri/excelize"
-	"fyne.io/fyne/widget"
-	"fyne.io/fyne/app"
 )
 
 func main()  {
-	testGui()
-	processCsv()
+	gui.TestGui()
+	//testProcess()
 }
 
-func testGui()  {
-	app := app.New()
-
-	w := app.NewWindow("Hello")
-	w.SetContent(widget.NewVBox(
-		widget.NewLabel("Hello Fyne!"),
-		widget.NewButton("Quit", func() {
-			app.Quit()
-		}),
-	))
-
-	w.ShowAndRun()
-}
-
-func processCsv()  {
+func testProcess()  {
 	var fileName string
+	files := excel.GetAllExcelInDir(config.EXCEL_DIR)
+	log.Log(files)
 	_, err := fmt.Scanln(&fileName)
-	if CheckError(err) {
+	if log.CheckError(err) {
 		return
 	}
-	Log(fileName)
-	excel2csv(fileName)
+	log.Log(fileName)
+	processFile(fileName)
+	log.Log("success")
 }
 
-func excel2csv(fileName string) {
-	xlsx, err := excelize.OpenFile(fileName)
-	if CheckError(err) {
+func processFile(fileName string)  {
+	table := excel.ExcelToTable(fileName)
+	if table == nil {
+		log.Log("to table failed!")
 		return
 	}
-	sheets := xlsx.GetSheetMap()
-	if len(sheets) <= 0 {
-		return
-	}
-	rows, err := xlsx.GetRows(sheets[1])
-	if CheckError(err) {
-		return	
-	}
-	for _, row := range rows {
-		var rowSting string
-		for _, cell := range row {
-			rowSting = rowSting + cell + ","
-		}
-		Log(rowSting)
-	}
+	log.Log(table.ToString())
+	general.GeneralToJavaBean(table)
+	general.GeneralToCsv(table)
 }
+
