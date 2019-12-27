@@ -78,11 +78,11 @@ func RowsToTable(rows [][]string, fileName string) *entry.Table {
 	return table
 }
 
-func GetImportFromColumn(table *entry.Table) []string {
-	var imports []string
+func GetImportFromColumn(table *entry.Table) map[string]string {
+	imports := make(map[string]string)
 	for _, column := range table.Columns {
-		if column.JavaType == "Date" {
-			imports = append(imports, "java.util.Date")
+		if column.JavaType == "Date"{
+			imports[column.JavaType] = "java.util.Date"
 		}
 		// 后续有其他的需要再加上
 	}

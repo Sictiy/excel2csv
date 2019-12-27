@@ -18,11 +18,12 @@ type ToolGui struct {
 	window fyne.Window
 	allCheck []*widget.Check
 	form *widget.Form
+	labels []*widget.Label
 	// 缓存表数据
 	tables map[string]*entry.Table
 }
 
-func (gui ToolGui)Run() bool {
+func (gui *ToolGui)Run() bool {
 	gui.app = app.New()
 	gui.window = gui.app.NewWindow("ExcelTool")
 	// 左边
@@ -51,7 +52,7 @@ func (gui ToolGui)Run() bool {
 	return true
 }
 
-func (gui ToolGui)general()  {
+func (gui *ToolGui)general()  {
 	var selectFiles []string
 	for _, check := range gui.allCheck{
 		if check.Checked {
@@ -64,22 +65,42 @@ func (gui ToolGui)general()  {
 	gui.GeneralFiles(selectFiles)
 }
 
-func (gui ToolGui)freshForm() {
+func (gui *ToolGui)freshForm() {
 	for _, check := range gui.allCheck{
 		if check.Focused(){
 			table := gui.getTable(check.Text)
 			if table == nil{
 				log.Log("to table failed! table is nil")
 			}
-			gui.form.Items = gui.form.Items[0:0]
-			gui.form.Refresh()
-			gui.form.Append(table.JavaName, widget.NewLabel(table.Comment))
+			gui.clearForm()
+			for i, column := range table.Columns{
+				if len(gui.form.Items) <= i {
+					label := widget.NewLabel(column.JavaType)
+					gui.form.Append(column.Name, label)
+					gui.labels = append(gui.labels, label)
+				} else {
+					gui.form.Items[i].Text = column.Name
+					gui.labels[i].Text = column.JavaType
+					gui.form.Refresh()
+				}
+			}
 			return
 		}
 	}
 }
 
-func (gui ToolGui)getTable(fileName string) *entry.Table {
+func (gui *ToolGui)clearForm() {
+	for _, item := range gui.form.Items{
+		item.Text = ""
+	}
+	for _, label := range gui.labels{
+		label.Text = ""
+		label.Refresh()
+	}
+	gui.form.Refresh()
+}
+
+func (gui *ToolGui)getTable(fileName string) *entry.Table {
 	if gui.tables == nil {
 		gui.tables = make(map[string]*entry.Table)
 	}
@@ -90,13 +111,13 @@ func (gui ToolGui)getTable(fileName string) *entry.Table {
 }
 
 /**处理已选择文件***********************/
-func (gui ToolGui)GeneralFiles(files []string)  {
+func (gui *ToolGui)GeneralFiles(files []string)  {
 	for _, file := range files{
 		gui.processFile(file)
 	}
 }
 
-func (gui ToolGui)processFile(fileName string)  {
+func (gui *ToolGui)processFile(fileName string)  {
 	table := gui.getTable(fileName)
 	if table == nil {
 		log.Log("to table failed! table is nil")

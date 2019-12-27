@@ -13,7 +13,7 @@ type Table struct {
 	ColumnData [][]string
 	/**模板用**/
 	Package string
-	Imports []string
+	Imports map[string]string
 	JavaName string
 }
 
