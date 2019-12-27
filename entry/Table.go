@@ -22,5 +22,5 @@ func (table *Table)AddRow(aRowData []string)  {
 }
 
 func (table *Table)ToString() string {
-	return strings.Join([]string{table.Name, table.Comment}, ",")
+	return strings.Join([]string{table.JavaName, table.Comment}, ",")
 }

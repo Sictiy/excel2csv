@@ -2,47 +2,109 @@ package gui
 
 import (
 	"excel2csv/config"
+	"excel2csv/entry"
 	"excel2csv/excel"
+	"excel2csv/general"
+	"excel2csv/log"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 )
 
-func TestGui()  {
-	app := app.New()
-	window := app.NewWindow("ExcelTool")
+type ToolGui struct {
+	// gui组件
+	app fyne.App
+	window fyne.Window
+	allCheck []*widget.Check
+	form *widget.Form
+	// 缓存表数据
+	tables map[string]*entry.Table
+}
 
-	left := widget.NewVBox()
-	right := widget.NewVBox()
-
+func (gui ToolGui)Run() bool {
+	gui.app = app.New()
+	gui.window = gui.app.NewWindow("ExcelTool")
 	// 左边
+	left := widget.NewVBox()
+	left.Append(widget.NewButton("general", func() {
+		gui.general()
+	}))
 	files := excel.GetAllExcelInDir(config.EXCEL_DIR)
-	leftForm := widget.NewForm()
-	left.Append(leftForm)
 	for _, file := range files{
-		leftForm.Append("", widget.NewLabel(file))
+		check := widget.NewCheck(file, func(b bool) {
+			gui.freshForm()
+		})
+		gui.allCheck = append(gui.allCheck, check)
+		left.Append(check)
 	}
 
 	// 右边
-	rightForm := widget.NewForm()
-	rightForm.Append("", widget.NewLabel("22"))
-	right.Append(rightForm)
+	right := widget.NewVBox()
+	gui.form = widget.NewForm()
+	right.Append(gui.form)
 
-	// 窗口 菜单
-	mainMenu := fyne.NewMainMenu(fyne.NewMenu("file",
-		fyne.NewMenuItem("general", func() {
-		general()
-	})))
-	window.SetMainMenu(mainMenu)
 	content := fyne.NewContainerWithLayout(layout.NewHBoxLayout(), left, right)
-	window.SetContent(content)
-	window.Resize(fyne.NewSize(480, 320))
-	window.ShowAndRun()
+	gui.window.SetContent(content)
+	gui.window.Resize(fyne.NewSize(480, 320))
+	gui.window.ShowAndRun()
+	return true
 }
 
-func general()  {
+func (gui ToolGui)general()  {
+	var selectFiles []string
+	for _, check := range gui.allCheck{
+		if check.Checked {
+			selectFiles = append(selectFiles, check.Text)
+		}
+	}
+	if len(selectFiles) <= 0 {
+		return
+	}
+	gui.GeneralFiles(selectFiles)
+}
 
+func (gui ToolGui)freshForm() {
+	for _, check := range gui.allCheck{
+		if check.Focused(){
+			table := gui.getTable(check.Text)
+			if table == nil{
+				log.Log("to table failed! table is nil")
+			}
+			gui.form.Items = gui.form.Items[0:0]
+			gui.form.Refresh()
+			gui.form.Append(table.JavaName, widget.NewLabel(table.Comment))
+			return
+		}
+	}
+}
+
+func (gui ToolGui)getTable(fileName string) *entry.Table {
+	if gui.tables == nil {
+		gui.tables = make(map[string]*entry.Table)
+	}
+	if gui.tables[fileName] == nil {
+		gui.tables[fileName] = excel.ExcelToTable(fileName)
+	}
+	return gui.tables[fileName]
+}
+
+/**处理已选择文件***********************/
+func (gui ToolGui)GeneralFiles(files []string)  {
+	for _, file := range files{
+		gui.processFile(file)
+	}
+}
+
+func (gui ToolGui)processFile(fileName string)  {
+	table := gui.getTable(fileName)
+	if table == nil {
+		log.Log("to table failed! table is nil")
+		return
+	}
+	log.Log(table.ToString())
+	general.GeneralToJavaBean(table)
+	general.GeneralToCsv(table)
 }
 
 
