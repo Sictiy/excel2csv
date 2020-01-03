@@ -6,6 +6,7 @@ import (
 
 func main()  {
 	gui := gui2.ToolGui{}
+	gui.Init()
 	gui.Run()
 }
 

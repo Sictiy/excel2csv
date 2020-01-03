@@ -61,9 +61,10 @@ func RowsToTable(rows [][]string, fileName string) *entry.Table {
 			}
 			for j, cell := range row {
 				column := &entry.Column{}
-				column.Name = cell
-				column.Comment = rows[index+1][j]
-				column.JavaType = rows[index+2][j]
+				column.Comment = cell
+				column.JavaType = rows[index+1][j]
+				column.Name = rows[index+2][j]
+				column.ProcessJavaType()
 				columns[j] = column
 			}
 			table.ColumnData = rows[0:3]
@@ -78,12 +79,26 @@ func RowsToTable(rows [][]string, fileName string) *entry.Table {
 	return table
 }
 
+
+
 func GetImportFromColumn(table *entry.Table) map[string]string {
 	imports := make(map[string]string)
 	for _, column := range table.Columns {
-		if column.JavaType == "Date"{
-			imports[column.JavaType] = "java.util.Date"
+		if column.IsList {
+			imports["list"] = "java.util.List"
+			imports["csvList"] = "com.opencsv.bean.CsvBindAndSplitByName"
+		} else {
+			imports["csvName"] = "com.opencsv.bean.CsvBindByName"
 		}
+		simpleType := column.JavaType
+		if column.IsList && "" != column.JavaSubType{
+			simpleType = column.JavaSubType
+		}
+		// 单个类型
+		if simpleType == "Date"{
+			imports["date"] = "java.util.Date"
+		}
+
 		// 后续有其他的需要再加上
 	}
 	return imports

@@ -2,7 +2,7 @@ package {{.Package}}.bean;
 
 import lombok.Getter;
 import lombok.ToString;
-{{range .Imports}}
+{{range .Imports -}}
 import {{.}};
 {{end}}
 import com.sictiy.common.entry.annotation.CommomAnnotation;
@@ -21,5 +21,6 @@ public class {{.JavaName}}Bean
     /**
     * {{ .Comment }}
     */
-    {{ .JavaType }} {{ .Name }};
+    {{ .CsvBind}}
+    private {{ .JavaType }} {{ .Name }};
 {{end}}{{ "}" }}

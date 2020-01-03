@@ -6,6 +6,7 @@ import (
 	"excel2csv/excel"
 	"excel2csv/general"
 	"excel2csv/log"
+	pool2 "excel2csv/pool"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/layout"
@@ -21,6 +22,12 @@ type ToolGui struct {
 	labels []*widget.Label
 	// 缓存表数据
 	tables map[string]*entry.Table
+	Pool *pool2.Pool
+}
+
+func (gui *ToolGui)Init()  {
+	gui.Pool = pool2.NewPool(4)
+	go gui.Pool.Run()
 }
 
 func (gui *ToolGui)Run() bool {
@@ -124,8 +131,14 @@ func (gui *ToolGui)processFile(fileName string)  {
 		return
 	}
 	log.Log(table.ToString())
-	general.GeneralToJavaBean(table)
-	general.GeneralToCsv(table)
+	//general.GeneralToJavaBean(table)
+	//general.GeneralToCsv(table)
+	t := pool2.NewTask(func() error {
+		general.GeneralToJavaBean(table)
+		general.GeneralToCsv(table)
+		return nil
+	})
+	gui.Pool.AddTask(t)
 }
 
 
